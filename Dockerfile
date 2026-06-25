@@ -6,12 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
 
-# Install build dependencies for dlib, then clean up apt cache in the same layer
+# Install runtime dependencies for OpenCV (headless version needs glib and gomp for DNN/parallel execution)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    libgl1-mesa-glx \
     libglib2.0-0 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -20,8 +18,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
+# Copy pre-downloaded models if present, and application code
+COPY ./models ./models
 COPY ./app ./app
+
+# Pre-download/verify models during image build so they are baked in
+RUN python -c "from app.verifier import download_models_if_missing; download_models_if_missing()"
 
 # Expose the application port
 EXPOSE 8000
