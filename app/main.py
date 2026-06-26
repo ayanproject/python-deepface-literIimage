@@ -35,7 +35,7 @@ def fetch_user_from_postgres(voter_id: str):
         # RealDictCursor makes rows act like dictionaries just like DictCursor did
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             # Removed backticks since Postgres uses double quotes or no quotes for tables
-            sql = f"SELECT face_image, encrypted_voter_id, encrypted_secret_pin FROM {config.DB_TABLE};"
+            sql = f"SELECT face_image, encrypted_voter_id, encrypted_secret_pin, email, name FROM {config.DB_TABLE};"
             cur.execute(sql)
             rows = cur.fetchall()
 
@@ -100,5 +100,7 @@ async def verify_face(
     return {
         "verified": bool(result.get("verified", False)),
         "distance": result.get("distance"),
-        "reason": result.get("reason", "")
+        "reason": result.get("reason", ""),
+        "email": user.get("email"),
+        "name": user.get("name")
     }
